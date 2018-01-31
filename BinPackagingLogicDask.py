@@ -9,16 +9,16 @@ from dask import compute
 class BinAssignment:
     
     #Sorts the box dataframe
-    def sortBoxes(self,df, volume, maxarea, maxDim):
+    def sortBoxes(self,df, volume, maxdiag, maxDim):
         df["rankingFactor1"] = df["AvailableCapacity"]/volume > 1
         df["rankingFactor2"] = df["AvailableCapacity"]/volume
         df["rankingFactor3"] = df["Max"] > maxDim
-        df["rankingFactor4"] =  df["Area"] > maxarea
+        df["rankingFactor4"] =  df["diagonal"] > maxdiag
         df.sort_values(by = ["Active", "rankingFactor1", "rankingFactor2","rankingFactor3", "rankingFactor3"], ascending=[False, False, True, False, False], inplace=True )
 
     #Logic to assign boxes to the order data
     def AssignBoxes(self,data_norm, availableBoxes):
-        self.sortBoxes(availableBoxes, np.sum(data_norm["unitVolume"]), np.max(data_norm["Area"]), np.max(data_norm["Max"]) )
+        self.sortBoxes(availableBoxes, np.sum(data_norm["unitVolume"]), np.max(data_norm["diagonal"]), np.max(data_norm["Max"]) )
         total_volume = np.sum(data_norm["unitVolume"])
         boxes_df = pd.concat([availableBoxes]*data_norm.shape[0], ignore_index=False)   
         boxes_df = boxes_df.reset_index()
@@ -28,9 +28,10 @@ class BinAssignment:
             area = row["Area"]
             dim1 = row["Min"]
             dim2 = row["Max"]
+            diagonal = row["diagonal"]
             #print(boxes_df.head())
             for ix1, row1 in boxes_df.iterrows():
-                if(vol < row1["AvailableCapacity"]) & (area <= row1["Area"]) & (dim1 <= row1["Min"]) & (dim2 <= row1["Max"]):
+                if(vol < row1["AvailableCapacity"]) & (diagonal <= row1["diagonal"]) & (dim1 <= row1["Min"]) & (dim2 <= row1["Max"]):
                     availableCapacity = row1["AvailableCapacity"] - vol
                     total_volume = total_volume - vol
                     boxes_df.set_value(ix1, "AvailableCapacity", availableCapacity)

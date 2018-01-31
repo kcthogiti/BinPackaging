@@ -11,12 +11,18 @@ if __name__ == '__main__':
     import pandas as pd
     pd.options.mode.chained_assignment = None  # default='warn'
 
+    def getDiagonal(row):
+        x = row["Median"]
+        y = row["Max"]
+        return np.sqrt(np.square(x) + np.square(y))
+
     data = pd.read_excel(inputflname, sheetname="Order Data")
     data["unitVolume"] = data.ITEM_LENGTH*data.ITEM_WIDTH*data.ITEM_HEIGHT
     data["Max"] = data[["ITEM_HEIGHT", "ITEM_WIDTH", "ITEM_LENGTH"]].apply(np.max, axis =1)
     data["Min"] = data[["ITEM_HEIGHT", "ITEM_WIDTH", "ITEM_LENGTH"]].apply(np.min, axis =1)
     data["Median"] = data[["ITEM_HEIGHT", "ITEM_WIDTH", "ITEM_LENGTH"]].apply(np.median, axis =1)
     data["Area"] = data["Max"]*data["Median"]
+    data["diagonal"] = data[["Max", "Median"]].apply(getDiagonal, axis = 1)
 
     #Duplicate the data based on the quantity of item for each order. 
     list_rows = []
@@ -48,6 +54,7 @@ if __name__ == '__main__':
     availableBoxes["Min"] = availableBoxes[["BoxLength", "BoxWidth", "BoxHeight"]].apply(np.min, axis =1)
     availableBoxes["Median"] = availableBoxes[["BoxLength", "BoxWidth", "BoxHeight"]].apply(np.median, axis =1)
     availableBoxes["Area"] = availableBoxes["Max"]*availableBoxes["Median"]
+    availableBoxes["diagonal"] = availableBoxes[["Median", "Max"]].apply(getDiagonal, axis = 1)
 
     analysisrun = BinPackagingLogicDask.BinAssignment()
     analysisrun.generateResults(data_norm_original, availableBoxes, outputflName)
